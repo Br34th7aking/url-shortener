@@ -1,0 +1,37 @@
+# --- Python / Django ---
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+*.sqlite3
+staticfiles/
+media/
+
+# --- Node / frontend / worker ---
+node_modules/
+dist/
+build/
+.vite/
+coverage/
+.wrangler/
+
+# --- Secrets / env ---
+.env
+.env.*
+!.env.example
+*.pem
+
+# --- Docker ---
+*.local
+
+# --- OS / editor ---
+.DS_Store
+.idea/
+.vscode/
+*.swp
