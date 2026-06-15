@@ -3,6 +3,8 @@ import logging
 from django.core.cache import cache
 from django.db import Error as DatabaseError
 from django.db import connection
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import serializers
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
@@ -30,6 +32,17 @@ def _redis_ok() -> bool:
         return False
 
 
+@extend_schema(
+    description="Liveness/readiness probe reporting the service + its DB and cache.",
+    responses=inline_serializer(
+        name="HealthResponse",
+        fields={
+            "status": serializers.CharField(),
+            "db": serializers.CharField(),
+            "redis": serializers.CharField(),
+        },
+    ),
+)
 @api_view(["GET"])
 def health(request):
     """Liveness/readiness probe: reports the service + its DB and cache."""
