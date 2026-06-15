@@ -46,7 +46,9 @@ THIRD_PARTY_APPS = [
     "drf_spectacular",
 ]
 
-LOCAL_APPS: list[str] = []
+LOCAL_APPS: list[str] = [
+    "apps.accounts",
+]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -130,3 +132,5 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "0.1.0",
     "SERVE_INCLUDE_SCHEMA": False,
 }
+
+AUTH_USER_MODEL = "accounts.User"
