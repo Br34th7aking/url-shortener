@@ -23,7 +23,9 @@ environ.Env.read_env(BASE_DIR / ".env")
 
 # SECURITY: dev default keeps local/CI frictionless; prod re-reads with no
 # default so a missing key fails loudly (see prod.py).
-SECRET_KEY = env("DJANGO_SECRET_KEY", default="django-insecure-dev-only-do-not-use-in-prod")
+SECRET_KEY = env(
+    "DJANGO_SECRET_KEY", default="django-insecure-dev-only-do-not-use-in-prod"
+)
 
 DEBUG = env("DJANGO_DEBUG")
 
@@ -101,7 +103,9 @@ CACHES = {
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
+    },
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
