@@ -1,0 +1,10 @@
+name = "url-shortener"
+main = "src/index.ts"
+compatibility_date = "2026-06-16"
+
+# KV namespace: code -> long_url edge cache (cache-aside from origin).
+[[kv_namespaces]]
+binding = "LINKS"
+id = "e440ed93242344e4833521080494d764"
+
+# Secrets (set via `wrangler secret put`, never committed): AXIOM_TOKEN, SHARED_SECRET.
