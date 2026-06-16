@@ -1,3 +1,1 @@
-from django.db import models
-
-# Create your models here.
+# Link model added in #13.

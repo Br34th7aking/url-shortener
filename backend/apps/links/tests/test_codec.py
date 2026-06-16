@@ -1,7 +1,5 @@
 from collections import Counter
 
-import pytest
-
 from apps.links.codec import ALPHABET, generate_code
 
 
@@ -35,4 +33,4 @@ def test_codes_are_random_not_constant():
 def test_distribution_is_not_trivially_skewed():
     sample = generate_code(6200)
     most_common_count = Counter(sample).most_common(1)[0][1]
-    assert most_common_count < 6200 * 0.10 # no character dominates > 10%
+    assert most_common_count < 6200 * 0.10  # no character dominates > 10%
