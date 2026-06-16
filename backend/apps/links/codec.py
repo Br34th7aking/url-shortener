@@ -20,5 +20,9 @@ def generate_code(length: int = 7) -> str:
 
     Uses secrets.choice (CSPRNG) so codes can't be predicted from prior output;
     62**7 ~= 3.5e12 keyspace makes collisions negligible at our scale.
+
+    Raises ValueError if length < 1 — an empty code is never a valid short link.
     """
+    if length < 1:
+        raise ValueError(f"length must be >= 1, got {length}")
     return "".join(secrets.choice(ALPHABET) for _ in range(length))

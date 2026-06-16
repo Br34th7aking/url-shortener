@@ -1,5 +1,7 @@
 from collections import Counter
 
+import pytest
+
 from apps.links.codec import ALPHABET, generate_code
 
 
@@ -34,3 +36,10 @@ def test_distribution_is_not_trivially_skewed():
     sample = generate_code(6200)
     most_common_count = Counter(sample).most_common(1)[0][1]
     assert most_common_count < 6200 * 0.10  # no character dominates > 10%
+
+
+@pytest.mark.parametrize("bad_length", [0, -1, -7])
+def test_rejects_zero_or_negative_length(bad_length):
+    # An empty/invalid code is never a valid short link — reject at the source.
+    with pytest.raises(ValueError):
+        generate_code(bad_length)
