@@ -19,7 +19,7 @@ from django.contrib import admin
 from django.urls import path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
-from apps.accounts.views import LoginView, RegisterView
+from apps.accounts.views import LoginView, LogoutView, RefreshView, RegisterView
 from apps.core.views import health
 from apps.links.views import LinkCreateView, LinkResolveView
 
@@ -28,6 +28,8 @@ urlpatterns = [
     path("api/v1/health", health, name="health"),
     path("api/v1/auth/register", RegisterView.as_view(), name="auth-register"),
     path("api/v1/auth/login", LoginView.as_view(), name="auth-login"),
+    path("api/v1/auth/refresh", RefreshView.as_view(), name="auth-refresh"),
+    path("api/v1/auth/logout", LogoutView.as_view(), name="auth-logout"),
     path("api/v1/links", LinkCreateView.as_view(), name="link-create"),
     path(
         "api/v1/links/<str:code>/resolve",
