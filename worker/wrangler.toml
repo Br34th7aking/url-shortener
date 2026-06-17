@@ -2,6 +2,11 @@ name = "url-shortener"
 main = "src/index.ts"
 compatibility_date = "2026-06-16"
 
+# Django origin the Worker calls on a KV miss (/resolve). Dev default; deployed
+# value is set per-environment. Tests override this via vitest.config.ts.
+[vars]
+ORIGIN_URL = "http://localhost:8000"
+
 # KV namespace: code -> long_url edge cache (cache-aside from origin).
 [[kv_namespaces]]
 binding = "LINKS"
