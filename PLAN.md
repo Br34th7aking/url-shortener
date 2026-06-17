@@ -45,7 +45,7 @@ Live count:       Redis pub/sub --> Django SSE stream --> React (EventSource)
 - `User` (email login).
 - `Link`: `id` (bigint autoincrement = counter), `short_code` (unique, indexed; `base62(id)` or custom alias), `long_url`, `owner` FK, `created_at`, `expires_at?`, `is_active`.
 
-**Code-gen:** auto = `base62(link.id)` post-insert (PK = monotonic counter → zero collisions; note guessability → offset/obfuscate option in rationale doc). Custom alias = validate charset/length/reserved-words/uniqueness, bypass counter.
+**Code-gen (Strategy B — locked 2026-06-17, supersedes earlier base62(id) idea):** auto = **random base62** draw (`secrets.choice`, 7 chars), uniqueness enforced by the DB unique constraint + insert-layer retry on `IntegrityError`. Non-enumerable (codes don't leak row count or have an arithmetic link to `id`); no decode() — resolution is a plain string lookup. Rejected `base62(link.id)` (Strategy A) for guessability/enumeration. Custom alias = validate charset/length/reserved-words/uniqueness, same `code` column.
 
 **Edge cache-aside:** Worker reads Workers KV; on miss calls origin `/resolve` (shared-secret auth), populates KV (value carries `expires_at`; KV TTL set to it). Postgres never on the redirect hot path after warm-up.
 
