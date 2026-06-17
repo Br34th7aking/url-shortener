@@ -11,6 +11,9 @@ SECRET_KEY = env("DJANGO_SECRET_KEY")
 # Required in prod — never wildcard.
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS")
 
+# Re-read with no default: the Worker↔origin secret MUST be set in prod.
+SHARED_SECRET = env("SHARED_SECRET")
+
 # Baseline TLS hardening (expanded in Phase 5).
 SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=True)
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

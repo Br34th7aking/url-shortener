@@ -14,7 +14,7 @@ afterEach(() => vi.unstubAllGlobals())
 // (or 404 when null), Axiom ingest always 200-OKs. Any other URL throws so a
 // stray call fails loudly. Returns the spy so tests can assert on its calls.
 function stubFetch(resolve: { long_url: string; expires_at: string | null } | null) {
-  const spy = vi.fn(async (input: RequestInfo | URL) => {
+  const spy = vi.fn(async (input: RequestInfo | URL, _init?: RequestInit) => {
     const url = String(input)
     if (url.startsWith("https://api.axiom.co/")) {
       return new Response("", { status: 200 })
@@ -74,6 +74,17 @@ describe("worker fetch", () => {
     expect(res.headers.get("Location")).toBe("https://example.com/y")
     expect(await env.LINKS.get("miss123")).not.toBeNull()
     expect(axiomCalls(spy)).toHaveLength(1)
+  })
+
+  it("KV miss -> origin resolve call carries the shared secret", async () => {
+    const spy = stubFetch({ long_url: "https://example.com/s", expires_at: null })
+
+    await call("/sec1234")
+
+    const resolveCall = spy.mock.calls.find(([i]) => String(i).endsWith("/resolve"))
+    expect(resolveCall).toBeDefined()
+    const headers = new Headers(resolveCall?.[1]?.headers)
+    expect(headers.get("X-Shared-Secret")).toBe("test-secret")
   })
 
   it("click event hits the Axiom ingest API with auth + code payload", async () => {

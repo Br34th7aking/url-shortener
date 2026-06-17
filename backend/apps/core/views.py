@@ -5,7 +5,7 @@ from django.db import Error as DatabaseError
 from django.db import connection
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, throttle_classes
 from rest_framework.response import Response
 
 logger = logging.getLogger(__name__)
@@ -44,6 +44,7 @@ def _redis_ok() -> bool:
     ),
 )
 @api_view(["GET"])
+@throttle_classes([])  # probes are polled frequently from few IPs — never throttle
 def health(request):
     """Liveness/readiness probe: reports the service + its DB and cache."""
     db_ok = _db_ok()
