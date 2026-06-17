@@ -32,3 +32,14 @@ class LinkSerializer(serializers.ModelSerializer):
         return Link.objects.create_with_unique_code(
             long_url=validated_data["long_url"], owner=None
         )
+
+
+class LinkResolveSerializer(serializers.ModelSerializer):
+    """Output-only shape for the Worker's KV-miss lookup: where + when-expires.
+
+    Expiry is surfaced but not enforced here — the edge (Phase 3) acts on it.
+    """
+
+    class Meta:
+        model = Link
+        fields = ["long_url", "expires_at"]
