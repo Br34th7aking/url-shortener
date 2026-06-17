@@ -46,6 +46,7 @@ DJANGO_APPS = [
 
 THIRD_PARTY_APPS = [
     "rest_framework",
+    "rest_framework_simplejwt.token_blacklist",
     "drf_spectacular",
 ]
 
@@ -138,10 +139,13 @@ REST_FRAMEWORK = {
 
 # JWT (simplejwt). Short access token (kept in memory by the SPA) + longer
 # refresh token (delivered as an httpOnly cookie, see AUTH_COOKIE_* below).
-# Rotation + blacklist-after-rotation are wired in Phase 2 #21 (refresh/logout).
+# Every refresh rotates the token and blacklists the consumed one, so a stolen
+# or replayed refresh token is single-use.
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
 }
 
 # Refresh-token cookie. Scoped to the auth endpoints so it isn't sent on every
