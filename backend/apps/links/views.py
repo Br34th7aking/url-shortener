@@ -1,18 +1,26 @@
 from rest_framework import generics
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from apps.links.models import Link
 from apps.links.serializers import LinkResolveSerializer, LinkSerializer
 
 
-class LinkCreateView(generics.CreateAPIView):
-    """POST /api/v1/links -> 201 {short_url, code, long_url}.
+class LinkListCreateView(generics.ListCreateAPIView):
+    """/api/v1/links — the owner's link collection.
 
-    Open in Phase 1 (no auth yet); locked to IsAuthenticated in Phase 2.
+    POST -> 201 {short_url, code, long_url}, stamping the caller as owner.
+    GET  -> 200 paginated list of the caller's own links (most recent first).
+    Both require authentication; a link always belongs to exactly one user.
     """
 
     serializer_class = LinkSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Link.objects.filter(owner=self.request.user).order_by("-created_at")
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
 
 
 class LinkResolveView(generics.RetrieveAPIView):

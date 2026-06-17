@@ -28,9 +28,10 @@ class LinkSerializer(serializers.ModelSerializer):
         return f"{settings.SHORT_BASE_URL}/{obj.code}"
 
     def create(self, validated_data):
-        # owner stays None in Phase 1 (no auth); Phase 2 sets it from request.user.
+        # owner is injected by the view's perform_create (request.user).
         return Link.objects.create_with_unique_code(
-            long_url=validated_data["long_url"], owner=None
+            long_url=validated_data["long_url"],
+            owner=validated_data.get("owner"),
         )
 
 
