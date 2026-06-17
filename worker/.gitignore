@@ -1,0 +1,11 @@
+# Local dev secrets for `wrangler dev` (e.g. AXIOM_TOKEN) — never commit.
+# The .example template IS committed (documents required vars, no real values).
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+
+# Wrangler local state (local KV, logs, build cache).
+.wrangler/
+
+node_modules/
+dist/

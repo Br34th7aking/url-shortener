@@ -17,5 +17,23 @@ worker/    Cloudflare Worker (edge redirect + Axiom ingest)
 nginx/     reverse proxy
 ```
 
+## Run it locally
+
+The origin stack runs in Docker; the edge Worker runs on its native Cloudflare
+runtime (`wrangler dev`) since it can't be containerized.
+
+```bash
+# 1. Origin + frontend: Postgres, Redis, Django (:8000), Vite (:5173)
+make up            # == docker compose up --build
+
+# 2. Edge Worker (:8787) — separate terminal
+cp worker/.dev.vars.example worker/.dev.vars   # then add your Axiom ingest token
+make worker        # == cd worker && npx wrangler dev --port 8787
+```
+
+Then open http://localhost:5173, shorten a URL, and visit the returned
+`localhost:8787/<code>` link — the first hit warms Workers KV from the origin,
+the next is served straight from the edge. `make test` runs all three suites.
+
 ## Status
-🚧 Phase 0 — walking skeleton (in progress).
+✅ Phase 1 — core spine: create + edge redirect + click event. (See `PLAN.md`.)
