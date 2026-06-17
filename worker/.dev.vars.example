@@ -1,0 +1,5 @@
+# Copy to `.dev.vars` (gitignored) and fill in for `wrangler dev`.
+# Axiom ingest token — the Worker POSTs click events to the AXIOM_DATASET
+# configured in wrangler.toml. Without it, redirects still work; events 401
+# silently (fire-and-forget).
+AXIOM_TOKEN=your-axiom-ingest-token
