@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models
 
+from apps.links.managers import LinkManager
+
 
 class Link(models.Model):
     """A shortened link: a unique short `code` mapping to a `long_url`.
@@ -22,6 +24,8 @@ class Link(models.Model):
     )
     expires_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    objects = LinkManager()
 
     def __str__(self):
         return f"{self.code} -> {self.long_url}"

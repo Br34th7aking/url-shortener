@@ -140,3 +140,5 @@ SPECTACULAR_SETTINGS = {
 }
 
 AUTH_USER_MODEL = "accounts.User"
+
+SHORT_BASE_URL = env("SHORT_BASE_URL", default="http://localhost:8787")
