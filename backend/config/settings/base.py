@@ -145,7 +145,7 @@ SIMPLE_JWT = {
 }
 
 # Refresh-token cookie. Scoped to the auth endpoints so it isn't sent on every
-# API call. Secure is off by default for local http; prod.py turns it on.
+# API call. Secure is off by default for local http; prod.py forces it True.
 AUTH_COOKIE = "refresh_token"
 AUTH_COOKIE_PATH = "/api/v1/auth"
 AUTH_COOKIE_SAMESITE = "Lax"

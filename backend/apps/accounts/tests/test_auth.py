@@ -6,6 +6,7 @@ httpOnly cookie and never appears in the body (XSS can't read it).
 """
 
 import pytest
+from django.test import override_settings
 from rest_framework.test import APIClient
 
 pytestmark = pytest.mark.django_db
@@ -74,3 +75,13 @@ def test_login_bad_credentials_rejected(client, django_user_model):
         LOGIN_URL, {"email": EMAIL, "password": "wrong-password"}, format="json"
     )
     assert resp.status_code == 401
+
+
+@override_settings(AUTH_COOKIE_SECURE=True)
+def test_refresh_cookie_marked_secure_when_configured(client):
+    """When AUTH_COOKIE_SECURE is on (prod), the refresh cookie carries Secure
+    so the long-lived token never travels over plain HTTP."""
+    resp = client.post(
+        REGISTER_URL, {"email": EMAIL, "password": PASSWORD}, format="json"
+    )
+    assert resp.cookies[REFRESH_COOKIE]["secure"]

@@ -57,6 +57,9 @@ class LoginView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
         if response.status_code == status.HTTP_200_OK:
-            refresh = response.data.pop("refresh")
-            set_refresh_cookie(response, refresh)
+            # Defensive: a custom obtain-pair serializer (e.g. #21 rotation)
+            # could reshape the body; only move the cookie if refresh is present.
+            refresh = response.data.pop("refresh", None)
+            if refresh is not None:
+                set_refresh_cookie(response, refresh)
         return response
