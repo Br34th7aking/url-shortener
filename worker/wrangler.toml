@@ -6,7 +6,7 @@ compatibility_date = "2026-06-16"
 # value is set per-environment. Tests override this via vitest.config.ts.
 [vars]
 ORIGIN_URL = "http://localhost:8000"
-AXIOM_DATASET = "clicks"
+AXIOM_DATASET = "url-shortener-clicks"
 
 # KV namespace: code -> long_url edge cache (cache-aside from origin).
 [[kv_namespaces]]
