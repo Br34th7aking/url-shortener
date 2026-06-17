@@ -48,8 +48,11 @@ export default {
       return redirect(long_url)
     }
 
-    // Miss -> ask the origin where this code points.
-    const res = await fetch(`${env.ORIGIN_URL}/api/v1/links/${code}/resolve`)
+    // Miss -> ask the origin where this code points. The /resolve endpoint is
+    // internal: authenticate with the shared secret the origin expects.
+    const res = await fetch(`${env.ORIGIN_URL}/api/v1/links/${code}/resolve`, {
+      headers: { "X-Shared-Secret": env.SHARED_SECRET },
+    })
     if (!res.ok) {
       return new Response("Not found", { status: 404 })
     }

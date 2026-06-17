@@ -3,3 +3,7 @@
 # configured in wrangler.toml. Without it, redirects still work; events 401
 # silently (fire-and-forget).
 AXIOM_TOKEN=your-axiom-ingest-token
+
+# Worker->origin shared secret for the internal /resolve call. Must match the
+# Django origin's SHARED_SECRET (its dev default is "dev-shared-secret").
+SHARED_SECRET=dev-shared-secret

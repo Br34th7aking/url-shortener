@@ -27,7 +27,9 @@ runtime (`wrangler dev`) since it can't be containerized.
 make up            # == docker compose up --build
 
 # 2. Edge Worker (:8787) — separate terminal
-cp worker/.dev.vars.example worker/.dev.vars   # then add your Axiom ingest token
+cp worker/.dev.vars.example worker/.dev.vars   # add your Axiom token; the
+                                               # SHARED_SECRET default already
+                                               # matches the dev origin
 make worker        # == cd worker && npx wrangler dev --port 8787
 ```
 

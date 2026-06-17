@@ -137,6 +137,17 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
+    # Rate limiting: anon by IP (brute-force protection on login/register),
+    # authenticated by user id. Counters live in the cache (Redis in prod).
+    # The machine endpoints (health, the Worker's /resolve) opt out per-view.
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "30/min",
+        "user": "120/min",
+    },
 }
 
 # JWT (simplejwt). Short access token (kept in memory by the SPA) + longer
@@ -167,3 +178,8 @@ SPECTACULAR_SETTINGS = {
 AUTH_USER_MODEL = "accounts.User"
 
 SHORT_BASE_URL = env("SHORT_BASE_URL", default="http://localhost:8787")
+
+# Shared secret the edge Worker presents to the internal /resolve endpoint.
+# Dev default keeps `make worker` frictionless; prod re-reads with no default
+# (see prod.py) and the Worker injects the same value via `wrangler secret`.
+SHARED_SECRET = env("SHARED_SECRET", default="dev-shared-secret")

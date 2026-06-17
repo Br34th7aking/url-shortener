@@ -15,6 +15,7 @@ export default defineConfig({
           ORIGIN_URL: "https://origin.test",
           AXIOM_DATASET: "clicks",
           AXIOM_TOKEN: "test-token",
+          SHARED_SECRET: "test-secret",
         },
       },
     }),
