@@ -1,14 +1,17 @@
 import HealthStatus from '../features/health/HealthStatus'
 import ShortenForm from '../features/links/ShortenForm'
+import MyLinksPage from './MyLinksPage'
 
+// The Layout provides the page chrome (header/main); HomePage is just the body:
+// shorten a URL, then see it appear in your links list.
 export default function HomePage() {
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center gap-6 bg-slate-50 text-slate-900">
-      <h1 className="text-3xl font-bold">URL Shortener</h1>
+    <>
       <div className="w-full max-w-xl">
         <ShortenForm />
       </div>
+      <MyLinksPage />
       <HealthStatus />
-    </main>
+    </>
   )
 }
