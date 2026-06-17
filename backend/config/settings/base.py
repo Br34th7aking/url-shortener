@@ -6,6 +6,7 @@ Config is read from the process environment via django-environ. Locally a
 variables are injected by the orchestrator / secret store.
 """
 
+from datetime import timedelta
 from pathlib import Path
 
 import environ
@@ -130,7 +131,25 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # DRF + OpenAPI
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ],
 }
+
+# JWT (simplejwt). Short access token (kept in memory by the SPA) + longer
+# refresh token (delivered as an httpOnly cookie, see AUTH_COOKIE_* below).
+# Rotation + blacklist-after-rotation are wired in Phase 2 #21 (refresh/logout).
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+}
+
+# Refresh-token cookie. Scoped to the auth endpoints so it isn't sent on every
+# API call. Secure is off by default for local http; prod.py turns it on.
+AUTH_COOKIE = "refresh_token"
+AUTH_COOKIE_PATH = "/api/v1/auth"
+AUTH_COOKIE_SAMESITE = "Lax"
+AUTH_COOKIE_SECURE = env.bool("AUTH_COOKIE_SECURE", default=False)
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "URL Shortener API",
