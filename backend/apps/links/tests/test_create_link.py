@@ -7,12 +7,24 @@ from apps.links.models import Link
 # Deterministic base so short_url assertions don't depend on the dev env value.
 BASE = "https://sho.rt"
 
+pytestmark = pytest.mark.django_db
 
-@pytest.mark.django_db
+
+@pytest.fixture
+def auth_client(django_user_model):
+    """Authenticated client — creating links requires a logged-in user (Phase 2)."""
+    user = django_user_model.objects.create_user(
+        email="ada@example.com", password="s3cure-pass-23"
+    )
+    client = APIClient()
+    client.force_authenticate(user=user)
+    return client
+
+
 @override_settings(SHORT_BASE_URL=BASE)
-def test_creates_link_returns_201():
+def test_creates_link_returns_201(auth_client):
     """POST a valid long_url -> 201 with {short_url, code, long_url} and a row."""
-    resp = APIClient().post(
+    resp = auth_client.post(
         "/api/v1/links", {"long_url": "https://example.com/path"}, format="json"
     )
 
@@ -26,11 +38,10 @@ def test_creates_link_returns_201():
     assert link.long_url == "https://example.com/path"
 
 
-@pytest.mark.django_db
 @override_settings(SHORT_BASE_URL=BASE)
-def test_generated_code_is_seven_base62_chars():
+def test_generated_code_is_seven_base62_chars(auth_client):
     """Auto codes are 7-char base62 draws (Strategy B)."""
-    resp = APIClient().post(
+    resp = auth_client.post(
         "/api/v1/links", {"long_url": "https://example.com"}, format="json"
     )
 
@@ -39,18 +50,6 @@ def test_generated_code_is_seven_base62_chars():
     assert code.isalnum()
 
 
-@pytest.mark.django_db
-def test_anonymous_create_leaves_owner_null():
-    """No auth in Phase 1 -> links are created ownerless."""
-    resp = APIClient().post(
-        "/api/v1/links", {"long_url": "https://example.com"}, format="json"
-    )
-
-    link = Link.objects.get(code=resp.json()["code"])
-    assert link.owner is None
-
-
-@pytest.mark.django_db
 @pytest.mark.parametrize(
     "bad_url",
     [
@@ -61,18 +60,17 @@ def test_anonymous_create_leaves_owner_null():
         "",  # empty
     ],
 )
-def test_rejects_non_http_urls(bad_url):
+def test_rejects_non_http_urls(auth_client, bad_url):
     """Only http/https are shortenable; everything else is a 400 and no row."""
-    resp = APIClient().post("/api/v1/links", {"long_url": bad_url}, format="json")
+    resp = auth_client.post("/api/v1/links", {"long_url": bad_url}, format="json")
 
     assert resp.status_code == 400
     assert Link.objects.count() == 0
 
 
-@pytest.mark.django_db
-def test_rejects_missing_long_url():
+def test_rejects_missing_long_url(auth_client):
     """Omitting long_url is a 400."""
-    resp = APIClient().post("/api/v1/links", {}, format="json")
+    resp = auth_client.post("/api/v1/links", {}, format="json")
 
     assert resp.status_code == 400
     assert Link.objects.count() == 0

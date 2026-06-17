@@ -21,7 +21,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 from apps.accounts.views import LoginView, LogoutView, RefreshView, RegisterView
 from apps.core.views import health
-from apps.links.views import LinkCreateView, LinkResolveView
+from apps.links.views import LinkListCreateView, LinkResolveView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -30,7 +30,7 @@ urlpatterns = [
     path("api/v1/auth/login", LoginView.as_view(), name="auth-login"),
     path("api/v1/auth/refresh", RefreshView.as_view(), name="auth-refresh"),
     path("api/v1/auth/logout", LogoutView.as_view(), name="auth-logout"),
-    path("api/v1/links", LinkCreateView.as_view(), name="link-create"),
+    path("api/v1/links", LinkListCreateView.as_view(), name="link-list-create"),
     path(
         "api/v1/links/<str:code>/resolve",
         LinkResolveView.as_view(),
