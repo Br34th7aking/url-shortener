@@ -11,7 +11,11 @@ export default defineConfig({
     cloudflareTest({
       wrangler: { configPath: "./wrangler.toml" },
       miniflare: {
-        bindings: { ORIGIN_URL: "https://origin.test" },
+        bindings: {
+          ORIGIN_URL: "https://origin.test",
+          AXIOM_DATASET: "clicks",
+          AXIOM_TOKEN: "test-token",
+        },
       },
     }),
   ],
