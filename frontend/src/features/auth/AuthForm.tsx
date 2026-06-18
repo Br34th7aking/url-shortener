@@ -8,11 +8,14 @@ import type { Credentials } from './api'
 function errorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 401) return 'Invalid email or password.'
-    const body = error.body as Record<string, string[]> | null
+    const body = error.body as Record<string, unknown> | null
     if (body) {
+      // Field errors are arrays (["msg"]); `detail` (e.g. throttling) is a
+      // plain string. Handle both — never index into a string.
       for (const field of ['email', 'password', 'detail']) {
-        const messages = body[field]
-        if (messages?.length) return messages[0]
+        const value = body[field]
+        if (typeof value === 'string' && value) return value
+        if (Array.isArray(value) && value.length) return String(value[0])
       }
     }
   }

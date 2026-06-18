@@ -1,7 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { http, HttpResponse } from 'msw'
 import { server } from '../../test/server'
-import { apiGet, apiPost, refreshSession, setAccessToken } from './client'
+import {
+  apiGet,
+  apiPost,
+  getAccessToken,
+  refreshSession,
+  setAccessToken,
+} from './client'
 
 const EMPTY_PAGE = { count: 0, next: null, previous: null, results: [] }
 
@@ -61,6 +67,27 @@ describe('api client refresh-on-401', () => {
       status: 401,
     })
     expect(refreshCalls).toBe(0)
+  })
+
+  it('a failing in-flight refresh does not wipe a token set by a concurrent login', async () => {
+    let releaseRefresh: () => void = () => {}
+    const gate = new Promise<void>((resolve) => {
+      releaseRefresh = resolve
+    })
+    server.use(
+      http.post('*/api/v1/auth/refresh', async () => {
+        await gate // hold the refresh open until the "login" has set a token
+        return new HttpResponse(null, { status: 401 })
+      }),
+    )
+
+    const pending = refreshSession() // boot refresh, in flight
+    setAccessToken('token-from-login') // login lands mid-flight
+    releaseRefresh()
+
+    await expect(pending).resolves.toBe(false)
+    // The fresh login token must survive the stale refresh's failure.
+    expect(getAccessToken()).toBe('token-from-login')
   })
 
   it('refreshSession resolves true when the cookie is still valid', async () => {

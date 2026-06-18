@@ -17,7 +17,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let active = true
     refreshSession().then((ok) => {
       if (!active) return
-      setIsAuthenticated(ok)
+      // Never downgrade: if a login already authenticated us while this boot
+      // refresh was in flight, keep that result (prev || ok).
+      setIsAuthenticated((prev) => prev || ok)
       setInitializing(false)
     })
 

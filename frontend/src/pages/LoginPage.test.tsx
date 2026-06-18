@@ -53,4 +53,29 @@ describe('login flow', () => {
     expect(await screen.findByText(/no links yet/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /log out/i })).toBeInTheDocument()
   })
+
+  it('surfaces a string `detail` error in full (not its first character)', async () => {
+    server.use(
+      http.post(
+        '*/api/v1/auth/refresh',
+        () => new HttpResponse(null, { status: 401 }),
+      ),
+      // DRF throttling returns { detail: "<string>" } with a 429.
+      http.post('*/api/v1/auth/login', () =>
+        HttpResponse.json(
+          { detail: 'Request was throttled. Try again in 30 seconds.' },
+          { status: 429 },
+        ),
+      ),
+    )
+    const user = userEvent.setup()
+    renderApp()
+
+    await screen.findByRole('button', { name: /log in/i })
+    await user.type(screen.getByLabelText('Email'), 'ada@example.com')
+    await user.type(screen.getByLabelText('Password'), 's3cure-pass-23')
+    await user.click(screen.getByRole('button', { name: /log in/i }))
+
+    expect(await screen.findByText(/request was throttled/i)).toBeInTheDocument()
+  })
 })

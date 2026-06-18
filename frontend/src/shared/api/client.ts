@@ -12,6 +12,10 @@ export function setAccessToken(token: string | null): void {
   accessToken = token
 }
 
+export function getAccessToken(): string | null {
+  return accessToken
+}
+
 // The AuthProvider registers a callback so it can drop React auth state when a
 // refresh ultimately fails (session truly expired).
 let onSessionExpired: (() => void) | null = null
@@ -57,6 +61,9 @@ function refresh(): Promise<boolean> {
 }
 
 async function doRefresh(): Promise<boolean> {
+  // Snapshot the token: if a concurrent login sets a new one while this refresh
+  // is in flight, a failure here must NOT wipe that fresh token / log them out.
+  const tokenAtStart = accessToken
   try {
     const res = await fetch(`${BASE_URL}/auth/refresh`, {
       method: 'POST',
@@ -64,14 +71,14 @@ async function doRefresh(): Promise<boolean> {
       headers: { 'Content-Type': 'application/json' },
     })
     if (!res.ok) {
-      sessionExpired()
+      if (accessToken === tokenAtStart) sessionExpired()
       return false
     }
     const data = (await res.json()) as { access: string }
     accessToken = data.access
     return true
   } catch {
-    sessionExpired()
+    if (accessToken === tokenAtStart) sessionExpired()
     return false
   }
 }
