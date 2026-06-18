@@ -17,7 +17,9 @@ _MAX_ATTEMPTS = 5
 
 
 class LinkManager(models.Manager):
-    def create_with_unique_code(self, *, long_url, owner=None, length=7):
+    def create_with_unique_code(
+        self, *, long_url, owner=None, expires_at=None, length=7
+    ):
         """Create a Link with a freshly generated, unique short code.
 
         Retries on the unique-constraint collision (the authoritative check).
@@ -28,18 +30,25 @@ class LinkManager(models.Manager):
             code = generate_code(length)
             try:
                 with transaction.atomic():
-                    return self.create(code=code, long_url=long_url, owner=owner)
+                    return self.create(
+                        code=code,
+                        long_url=long_url,
+                        owner=owner,
+                        expires_at=expires_at,
+                    )
             except IntegrityError:
                 continue
         raise RuntimeError(
             f"could not allocate a unique code after {_MAX_ATTEMPTS} attempts"
         )
 
-    def create_with_code(self, *, code, long_url, owner=None):
+    def create_with_code(self, *, code, long_url, owner=None, expires_at=None):
         """Create a Link with a caller-supplied code (custom alias).
 
         Single insert in its own atomic block: a unique-constraint collision
         surfaces as IntegrityError for the caller to translate into a 409.
         """
         with transaction.atomic():
-            return self.create(code=code, long_url=long_url, owner=owner)
+            return self.create(
+                code=code, long_url=long_url, owner=owner, expires_at=expires_at
+            )

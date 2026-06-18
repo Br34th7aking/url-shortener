@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.core.validators import RegexValidator, URLValidator
 from django.db import IntegrityError
+from django.utils import timezone
 from rest_framework import serializers
 
 from apps.links.exceptions import AliasConflict
@@ -39,7 +40,7 @@ class LinkSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Link
-        fields = ["short_url", "code", "long_url"]
+        fields = ["short_url", "code", "long_url", "expires_at"]
 
     def get_short_url(self, obj) -> str:
         return f"{settings.SHORT_BASE_URL}/{obj.code}"
@@ -49,19 +50,29 @@ class LinkSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("That alias is reserved.")
         return value
 
+    def validate_expires_at(self, value):
+        # A non-future expiry would create an already-dead link.
+        if value <= timezone.now():
+            raise serializers.ValidationError("Expiry must be in the future.")
+        return value
+
     def create(self, validated_data):
         # owner is injected by the view's perform_create (request.user).
         owner = validated_data.get("owner")
+        expires_at = validated_data.get("expires_at")
         code = validated_data.get("code")
         if code:
             try:
                 return Link.objects.create_with_code(
-                    code=code, long_url=validated_data["long_url"], owner=owner
+                    code=code,
+                    long_url=validated_data["long_url"],
+                    owner=owner,
+                    expires_at=expires_at,
                 )
             except IntegrityError:
                 raise AliasConflict() from None
         return Link.objects.create_with_unique_code(
-            long_url=validated_data["long_url"], owner=owner
+            long_url=validated_data["long_url"], owner=owner, expires_at=expires_at
         )
 
 
