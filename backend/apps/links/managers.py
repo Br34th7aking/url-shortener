@@ -34,3 +34,12 @@ class LinkManager(models.Manager):
         raise RuntimeError(
             f"could not allocate a unique code after {_MAX_ATTEMPTS} attempts"
         )
+
+    def create_with_code(self, *, code, long_url, owner=None):
+        """Create a Link with a caller-supplied code (custom alias).
+
+        Single insert in its own atomic block: a unique-constraint collision
+        surfaces as IntegrityError for the caller to translate into a 409.
+        """
+        with transaction.atomic():
+            return self.create(code=code, long_url=long_url, owner=owner)
