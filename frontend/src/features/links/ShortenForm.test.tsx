@@ -28,7 +28,7 @@ describe('ShortenForm', () => {
     const user = userEvent.setup()
     renderWithClient(<ShortenForm />)
 
-    await user.type(screen.getByRole('textbox'), 'https://example.com/a-long-path')
+    await user.type(screen.getByLabelText('Long URL'), 'https://example.com/a-long-path')
     await user.click(screen.getByRole('button', { name: /shorten/i }))
 
     await waitFor(() =>
@@ -50,7 +50,7 @@ describe('ShortenForm', () => {
     Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
     renderWithClient(<ShortenForm />)
 
-    await user.type(screen.getByRole('textbox'), 'https://example.com')
+    await user.type(screen.getByLabelText('Long URL'), 'https://example.com')
     await user.click(screen.getByRole('button', { name: /shorten/i }))
     await screen.findByText('http://localhost:8787/XyZ7890')
 
@@ -68,11 +68,58 @@ describe('ShortenForm', () => {
     const user = userEvent.setup()
     renderWithClient(<ShortenForm />)
 
-    await user.type(screen.getByRole('textbox'), 'not-a-url')
+    await user.type(screen.getByLabelText('Long URL'), 'not-a-url')
     await user.click(screen.getByRole('button', { name: /shorten/i }))
 
     await waitFor(() =>
       expect(screen.getByText(/enter a valid url/i)).toBeInTheDocument(),
+    )
+  })
+
+  it('sends the custom alias and expiry in the request', async () => {
+    let received: { code?: string; expires_at?: string } = {}
+    server.use(
+      http.post('*/api/v1/links', async ({ request }) => {
+        received = (await request.json()) as typeof received
+        return HttpResponse.json(
+          {
+            short_url: 'http://localhost:8787/my-talk',
+            code: 'my-talk',
+            long_url: 'https://example.com',
+            expires_at: '2030-01-01T00:00:00Z',
+          },
+          { status: 201 },
+        )
+      }),
+    )
+    const user = userEvent.setup()
+    renderWithClient(<ShortenForm />)
+
+    await user.type(screen.getByLabelText('Long URL'), 'https://example.com')
+    await user.type(screen.getByLabelText('Custom alias'), 'my-talk')
+    await user.selectOptions(screen.getByLabelText('Expiry'), '3600')
+    await user.click(screen.getByRole('button', { name: /shorten/i }))
+
+    await screen.findByText('http://localhost:8787/my-talk')
+    expect(received.code).toBe('my-talk')
+    expect(typeof received.expires_at).toBe('string') // ISO timestamp computed
+  })
+
+  it('shows an alias-taken message on a 409', async () => {
+    server.use(
+      http.post('*/api/v1/links', () =>
+        HttpResponse.json({ detail: 'That alias is already taken.' }, { status: 409 }),
+      ),
+    )
+    const user = userEvent.setup()
+    renderWithClient(<ShortenForm />)
+
+    await user.type(screen.getByLabelText('Long URL'), 'https://example.com')
+    await user.type(screen.getByLabelText('Custom alias'), 'taken')
+    await user.click(screen.getByRole('button', { name: /shorten/i }))
+
+    await waitFor(() =>
+      expect(screen.getByText(/already taken/i)).toBeInTheDocument(),
     )
   })
 })
