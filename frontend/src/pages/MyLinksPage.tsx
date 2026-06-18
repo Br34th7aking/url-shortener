@@ -26,8 +26,13 @@ export default function MyLinksPage() {
             <a href={link.short_url} className="font-medium text-slate-900 underline">
               {link.short_url}
             </a>
-            <span className="truncate text-slate-500" title={link.long_url}>
+            <span className="flex-1 truncate text-slate-500" title={link.long_url}>
               {link.long_url}
+            </span>
+            <span className="shrink-0 text-xs text-slate-400">
+              {link.expires_at
+                ? `expires ${new Date(link.expires_at).toLocaleDateString()}`
+                : 'never expires'}
             </span>
           </li>
         ))}
