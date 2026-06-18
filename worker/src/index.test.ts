@@ -112,4 +112,54 @@ describe("worker fetch", () => {
     expect(res.status).toBe(404)
     expect(axiomCalls(spy)).toHaveLength(0)
   })
+
+  it("expired KV value -> 410 Gone, no redirect, no click event", async () => {
+    const spy = stubFetch(null)
+    await env.LINKS.put(
+      "exp1234",
+      JSON.stringify({
+        long_url: "https://example.com/old",
+        expires_at: "2000-01-01T00:00:00Z",
+      }),
+    )
+
+    const res = await call("/exp1234")
+
+    expect(res.status).toBe(410)
+    expect(axiomCalls(spy)).toHaveLength(0)
+  })
+
+  it("KV miss + origin returns expired -> 410, not cached, no click event", async () => {
+    const spy = stubFetch({
+      long_url: "https://example.com/old",
+      expires_at: "2000-01-01T00:00:00Z",
+    })
+
+    const res = await call("/expmiss")
+
+    expect(res.status).toBe(410)
+    expect(await env.LINKS.get("expmiss")).toBeNull() // don't cache a dead link
+    expect(axiomCalls(spy)).toHaveLength(0)
+  })
+
+  it("future expiry -> 302, cached, click event sent", async () => {
+    const future = new Date(Date.now() + 3_600_000).toISOString()
+    const spy = stubFetch({ long_url: "https://example.com/f", expires_at: future })
+
+    const res = await call("/fut1234")
+
+    expect(res.status).toBe(302)
+    expect(await env.LINKS.get("fut1234")).not.toBeNull()
+    expect(axiomCalls(spy)).toHaveLength(1)
+  })
+
+  it("expiry under the 60s KV TTL floor still redirects without throwing", async () => {
+    const soon = new Date(Date.now() + 30_000).toISOString()
+    stubFetch({ long_url: "https://example.com/s", expires_at: soon })
+
+    const res = await call("/soon123")
+
+    expect(res.status).toBe(302)
+    expect(await env.LINKS.get("soon123")).not.toBeNull()
+  })
 })
