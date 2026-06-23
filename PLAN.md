@@ -25,21 +25,71 @@ Build style: **"you code, I coach"** — user writes core logic, Claude explains
 - Secrets: django-environ (reads env) · `.env` gitignored (local) · Secrets Manager/SSM (prod) · GitHub Secrets + OIDC (CI) · Worker secrets via wrangler (Axiom token, shared secret).
 
 ## Architecture
+
+Target design (includes the Phase 4 analytics/live-count paths).
+
+### System topology
+```mermaid
+flowchart LR
+    Visitor([Visitor])
+    User([Dashboard user])
+    SPA["React / Vite SPA"]
+    Axiom[("Axiom<br/>click analytics")]
+
+    subgraph Edge["Cloudflare edge"]
+        Worker["Worker<br/>redirect + click events"]
+        KV[("Workers KV<br/>code → long_url")]
+    end
+
+    subgraph Origin["Origin · Docker"]
+        NGINX["nginx"]
+        Django["Django / DRF<br/>API + SSE"]
+        PG[("Postgres<br/>User · Link")]
+        Redis[("Redis<br/>throttle · counters · pub/sub")]
+    end
+
+    User --> SPA
+    SPA -->|"REST + EventSource"| NGINX
+    NGINX --> Django
+    Django <--> PG
+    Django <--> Redis
+
+    Visitor -->|"GET /:code"| Worker
+    Worker <-->|"cache-aside"| KV
+    Worker -.->|"miss → GET /resolve · shared secret"| Django
+    Worker -->|"302 / 410"| Visitor
+    Worker -->|"click event"| Axiom
+    Worker -.->|"incr ping · shared secret"| Django
+    Django -->|"APL query"| Axiom
 ```
-[React/Vite SPA] --> [nginx] --> [Django/DRF origin]
-                                    |-- Postgres (User, Link = source of truth)
-                                    |-- Redis (throttle | live-count | SSE pub/sub)
-                                    '-- (Celery housekeeping, optional)
 
-[Visitor] --> [Cloudflare Worker (edge)]
-                 |-- Workers KV: get code -> long_url   (cache-aside)
-                 |     miss -> GET origin /resolve -> populate KV
-                 |-- 302 redirect
-                 |-- fire click event --> Axiom
-                 '-- increment ping ----> origin /clicks/incr --> Redis --> SSE
+### Request flow — redirect (cache-aside) + click analytics + live count
+```mermaid
+sequenceDiagram
+    actor V as Visitor
+    participant W as Worker
+    participant KV as Workers KV
+    participant O as Django origin
+    participant R as Redis
+    participant AX as Axiom
+    actor D as Dashboard
 
-Dashboard reads:  Django --APL query--> Axiom  -->  React (React Query)
-Live count:       Redis pub/sub --> Django SSE stream --> React (EventSource)
+    V->>W: GET /:code
+    alt KV hit
+        W->>KV: get(code)
+        KV-->>W: long_url, expires_at
+    else KV miss
+        W->>O: GET /resolve (shared secret)
+        O-->>W: long_url, expires_at
+        W->>KV: put(code, TTL = expiry)
+    end
+    Note over W: expired → 410 Gone, otherwise 302
+    W-->>V: 302 redirect
+    W->>AX: click event (referrer, UA, geo)
+    W->>O: incr ping (shared secret)
+    O->>R: INCR clicks:code + PUBLISH
+    R-->>O: pub/sub message
+    O-->>D: SSE live-count tick
 ```
 **Data model (no ClickEvent — events live in Axiom):**
 - `User` (email login).
